@@ -1,6 +1,10 @@
 ---
 name: scroll-driven-homepage
 description: Design and build a scroll-driven ("scrollytelling") homepage — pinned scenes whose animation follows the scroll, text written word by word, a camera dive into a product screen, timed product demos — from an inspiration site to a reviewed, accessible, fast production page. No animation library; works with any framework. Use when someone wants a homepage or landing page "like <site>" with scroll animations, pinned sections, parallax, or animated product demos.
+license: MIT (see LICENSE)
+metadata:
+  author: Ecclesiaste Panda
+  version: 1.0.0
 ---
 
 # Scroll-driven homepage

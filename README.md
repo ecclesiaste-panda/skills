@@ -9,3 +9,12 @@ Nothing here may contain client names, private notes, secrets, or code copied fr
 | Skill | What it does |
 |---|---|
 | [scroll-driven-homepage](scroll-driven-homepage/SKILL.md) | From an inspiration site to a reviewed, accessible, fast scroll-driven homepage (pinned scenes, word-by-word text, dive into the product, timed demos). No animation library, any framework. |
+
+## Sharing a skill
+
+`./pack.sh <skill>` builds `dist/<skill>-<version>.zip` from the last commit (its `VERSION` file
+gets the commit id and date) and signs it: send the `.zip` and the `.zip.sig`. Each skill carries
+its own `LICENSE`. To check a zip came from me unchanged, a friend needs `allowed_signers` (my
+public key, sent separately) and runs:
+
+    ssh-keygen -Y verify -f allowed_signers -I ecclesiaste -n file -s <zip>.sig < <zip>

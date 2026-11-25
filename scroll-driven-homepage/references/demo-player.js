@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT — © 2026 Ecclesiaste Panda
 // Timed product demos that play one after another ("how it works" steps).
 //
 // A step is { durationMs, reset(), final(), play(run) }. `play` is async and must only await the

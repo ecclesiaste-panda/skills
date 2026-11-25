@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT — © 2026 Ecclesiaste Panda
 // Scroll engine for pinned scenes. Plain ES module, no dependency.
 //
 // A scene is a tall section with a sticky stage inside. While the section is near the viewport,
