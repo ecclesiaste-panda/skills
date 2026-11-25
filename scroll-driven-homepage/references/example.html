@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll-driven homepage — minimal example</title>
+<style>
+  :root { --ink: #14181f; --paper: #f6f4ef; --accent: #2f6f4f; font-family: system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: var(--ink); background: var(--paper); }
+  h1, h2 { font-weight: 500; letter-spacing: -0.02em; margin: 0; }
+
+  /* A scene: tall section + sticky stage. More height = slower scene. */
+  .scroll-scene { position: relative; }
+  .stage { position: sticky; top: 0; height: 100dvh; overflow: hidden; display: grid; place-items: center; }
+
+  /* Scene 1 — opening: "photo", headline, dive into a device screen */
+  #opening { height: 300vh; }
+  #opening .photo { position: absolute; inset: 0;
+    background: radial-gradient(circle at 30% 30%, #6b8f7a, #1e2a24 70%); }
+  #opening .copy { position: absolute; left: 50%; top: 7vh; translate: -50% 0; width: min(90vw, 40rem);
+    color: #fff; text-align: center; z-index: 1; }
+  #opening .copy p { margin: .5rem 0 0; }
+  #opening .copy h1 { font-size: clamp(2rem, 5vw, 4rem); }
+  #opening .device { position: relative; width: min(52vw, 700px); aspect-ratio: 16 / 10;
+    border: 10px solid #222; border-radius: 14px; background: #fff; transform-origin: 50% 50%;
+    box-shadow: 0 30px 80px rgb(0 0 0 / .4); translate: 0 12vh; /* below the headline; JS centres it during the dive */ }
+  #opening .screen { position: absolute; inset: 0; display: grid; place-items: center;
+    background: linear-gradient(#fff, #e9efe9); font-size: 1.4rem; text-align: center; padding: 1rem; }
+  @media (max-width: 40rem) {
+    #opening .device { width: min(56vw, 240px); aspect-ratio: 9 / 19; border-radius: 28px; }
+  }
+
+  /* Scene 2 — a statement written word by word, chips gathering into a name */
+  #problem { height: 260vh; }
+  #problem .statement { font-size: clamp(1.6rem, 4vw, 3rem); max-width: 22ch; text-align: center; line-height: 1.2; }
+  #problem .word { opacity: .12; transition: none; }
+  #problem .chip { position: absolute; left: 50%; top: 50%; padding: .4rem .8rem; border-radius: 999px;
+    background: #fff; box-shadow: 0 4px 16px rgb(0 0 0 / .12); white-space: nowrap; }
+  #problem .brand { position: absolute; left: 50%; top: 72%; translate: -50% 0; font-weight: 700;
+    color: var(--accent); font-size: 1.6rem; }
+
+  /* Reduced motion: no pinning, no extra height, end state */
+  .scroll-scene--static { height: auto !important; }
+  .scroll-scene--static .stage { position: relative; height: auto; min-height: 100dvh; padding: 4rem 1rem; }
+  .scroll-scene--static .chip { display: none; }
+
+  /* Steps with timed demos */
+  #steps { padding: 6rem 6vw; display: grid; gap: 2rem; grid-template-columns: 1fr 1.4fr; align-items: start; }
+  @media (max-width: 48rem) { #steps { grid-template-columns: 1fr; } }
+  #steps ol { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+  #steps button.tab { width: 100%; text-align: left; padding: 1rem; border: 1px solid #ccc; background: #fff;
+    border-radius: 10px; font: inherit; cursor: pointer; position: relative; overflow: hidden; }
+  #steps button.tab[aria-selected="true"] { border-color: var(--accent); }
+  #steps .timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--accent);
+    transform-origin: left; transform: scaleX(0); }
+  #steps .panel { background: #fff; border-radius: 14px; padding: 2rem; min-height: 14rem;
+    box-shadow: 0 10px 40px rgb(0 0 0 / .08); font-size: 1.2rem; }
+  #steps .big { font-size: 2.6rem; font-variant-numeric: tabular-nums; color: var(--accent); }
+  .note { font-size: .8rem; color: #666; }
+  footer { padding: 4rem 6vw; }
+</style>
+</head>
+<body>
+
+<section id="opening" class="scroll-scene">
+  <div class="stage">
+    <div class="photo" aria-hidden="true"></div>
+    <div class="copy"><h1>Plan the event. Know its footprint.</h1><p>Scroll to step inside.</p></div>
+    <div class="device" aria-hidden="true"><div class="screen">Your product's real screenshot</div></div>
+  </div>
+</section>
+
+<section id="problem" class="scroll-scene" aria-labelledby="problem-title">
+  <div class="stage">
+    <h2 id="problem-title" class="statement">Today the answer is spread across six tools and a dozen emails.</h2>
+    <span class="chip" aria-hidden="true">Quote.pdf</span>
+    <span class="chip" aria-hidden="true">Spreadsheet</span>
+    <span class="chip" aria-hidden="true">Supplier email</span>
+    <span class="chip" aria-hidden="true">Invoice</span>
+    <span class="chip" aria-hidden="true">Notes</span>
+    <span class="brand">Acme,</span>
+  </div>
+</section>
+
+<section id="steps" aria-labelledby="steps-title">
+  <div>
+    <h2 id="steps-title">How it works</h2>
+    <button type="button" id="pause" aria-pressed="false">Pause the demo</button>
+    <ol role="tablist" aria-label="Steps">
+      <li><button class="tab" role="tab" aria-selected="true">1. Describe<span class="timer"></span></button></li>
+      <li><button class="tab" role="tab" aria-selected="false">2. Compare<span class="timer"></span></button></li>
+      <li><button class="tab" role="tab" aria-selected="false">3. Estimate<span class="timer"></span></button></li>
+    </ol>
+  </div>
+  <div class="panel" role="tabpanel" aria-live="off">
+    <div id="demo"></div>
+    <p class="note">Illustrative example</p>
+  </div>
+</section>
+
+<footer>The usual sections follow, not animated.</footer>
+
+<script type="module">
+  import { seg, ease, lerp, wordReveal, splitWords, mountScene } from './engine.js';
+  import { DemoPlayer, watchVisibility } from './demo-player.js';
+
+  const small = matchMedia('(max-width: 40rem)');
+
+  // Scene 1: headline fades, photo defocuses, device grows until its screen fills the viewport.
+  {
+    const section = document.getElementById('opening');
+    const copy = section.querySelector('.copy');
+    const photo = section.querySelector('.photo');
+    const device = section.querySelector('.device');
+    mountScene(section, (p) => {
+      const out = ease(seg(p, 0.05, 0.3));
+      copy.style.opacity = String(1 - out);
+      copy.style.transform = `translateY(${lerp(0, -40, out)}px)`;
+      photo.style.filter = `blur(${lerp(0, 8, ease(seg(p, 0.1, 0.4)))}px)`;
+      // Scale needed for the device to cover the viewport, measured each frame (read before write).
+      const r = device.getBoundingClientRect();
+      const base = r.width / (parseFloat(device.style.scale) || 1);
+      const baseH = r.height / (parseFloat(device.style.scale) || 1);
+      const cover = Math.max(innerWidth / base, innerHeight / baseH) * 1.05;
+      const dive = ease(seg(p, 0.35, 0.9));
+      device.style.translate = `0 ${lerp(innerHeight * 0.12, 0, ease(seg(p, 0.2, 0.5)))}px`;
+      device.style.scale = String(lerp(1, cover, dive));
+    }, { staticProgress: 0 }); // reduced motion: the start (headline) is the content
+  }
+
+  // Scene 2: words written one by one, chips fly in, then gather into the brand name.
+  {
+    const section = document.getElementById('problem');
+    const words = splitWords(section.querySelector('.statement'));
+    const chips = [...section.querySelectorAll('.chip')];
+    const brand = section.querySelector('.brand');
+    const spots = [[-38, -30], [36, -28], [-40, 26], [38, 24], [0, -38]]; // % of viewport from centre
+    mountScene(section, (p) => {
+      words.forEach((w, i) => (w.style.opacity = String(lerp(0.12, 1, wordReveal(p, 0.05, 0.45, i, words.length)))));
+      const k = small.matches ? 0.7 : 1;
+      const gather = ease(seg(p, 0.6, 0.85));
+      brand.style.opacity = String(ease(seg(p, 0.8, 0.9)));
+      brand.style.scale = String(1 + 0.15 * Math.sin(Math.PI * seg(p, 0.84, 0.92))); // snap
+      chips.forEach((c, i) => {
+        const [sx, sy] = spots[i];
+        const arrive = ease(seg(p, 0.1 + i * 0.05, 0.3 + i * 0.05));
+        const x = lerp((sx * k * innerWidth) / 100, 0, gather);
+        const y = lerp((sy * innerHeight) / 100, innerHeight * 0.22, gather);
+        c.style.opacity = String(arrive * (1 - seg(p, 0.82, 0.88)));
+        c.style.transform = `translate(-50%, -50%) translate(${x}px, ${y}px) scale(${lerp(1, 0.4, gather)})`;
+      });
+    }, { staticProgress: 1 });
+  }
+
+  // Steps: timed demos.
+  {
+    const section = document.getElementById('steps');
+    const tabs = [...section.querySelectorAll('.tab')];
+    const timers = tabs.map((t) => t.querySelector('.timer'));
+    const demo = section.querySelector('#demo');
+    const fmt = new Intl.NumberFormat(document.documentElement.lang);
+    const steps = [
+      { durationMs: 5000,
+        reset: () => (demo.textContent = ''),
+        final: () => (demo.textContent = 'Conference, 150 people, Montreal'),
+        play: (run) => run.type('Conference, 150 people, Montreal', 2200, (t) => (demo.textContent = t)) },
+      { durationMs: 4500,
+        reset: () => (demo.textContent = 'Venue A · Venue B'),
+        final: () => (demo.innerHTML = 'Venue A · <strong>Venue B</strong> (closer to transit)'),
+        play: async (run) => { await run.wait(1200); demo.innerHTML = 'Venue A · <strong>Venue B</strong> (closer to transit)'; } },
+      { durationMs: 5000,
+        reset: () => (demo.innerHTML = '<span class="big">0</span> kg CO₂e (estimate)'),
+        final: () => (demo.innerHTML = `<span class="big">${fmt.format(1725)}</span> kg CO₂e (estimate)`),
+        play: (run) => run.count(0, 1725, 2000, (v) => (demo.querySelector('.big').textContent = fmt.format(Math.round(v)))) },
+    ];
+    const player = new DemoPlayer(steps, {
+      reduced: matchMedia('(prefers-reduced-motion: reduce)').matches,
+      onShow: (i) => tabs.forEach((t, j) => t.setAttribute('aria-selected', String(i === j))),
+      onProgress: (i, k) => timers.forEach((t, j) => (t.style.transform = `scaleX(${j === i ? k : 0})`)),
+    });
+    tabs.forEach((t, i) => t.addEventListener('click', () => player.go(i)));
+    const pause = section.querySelector('#pause');
+    pause.addEventListener('click', () => {
+      const paused = pause.getAttribute('aria-pressed') !== 'true';
+      pause.setAttribute('aria-pressed', String(paused));
+      pause.textContent = paused ? 'Play the demo' : 'Pause the demo';
+      player.setPaused(paused);
+    });
+    player.go(0);
+    watchVisibility(section, player);
+  }
+</script>
+</body>
+</html>
