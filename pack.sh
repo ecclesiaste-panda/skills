@@ -19,7 +19,28 @@ out="dist/$skill-${version:-0}.zip"
 mkdir -p dist
 rm -f "$out" "$out.sig"
 
+key="${SIGNING_KEY:-$HOME/.ssh/id_ed25519}"
 git archive --format=zip -o "$out" HEAD "$skill"
-ssh-keygen -Y sign -f "${SIGNING_KEY:-$HOME/.ssh/id_ed25519}" -n file "$out"
-
+ssh-keygen -Y sign -f "$key" -n file "$out"
 echo "built $out and $out.sig ($(git rev-parse --short HEAD))"
+
+# Essential edition: one SKILL.md, built from SKILL.lite.md with {{file}} replaced by
+# that file from references/ (as committed), plus {{version}} and {{commit}}.
+if git cat-file -e "HEAD:$skill/SKILL.lite.md" 2>/dev/null; then
+  lite="dist/$skill-${version:-0}-essential.SKILL.md"
+  rm -f "$lite" "$lite.sig"
+  SKILL="$skill" VERSION="${version:-0}" COMMIT="$(git rev-parse --short HEAD)" python3 - > "$lite" <<'PY'
+import os, re, subprocess
+skill = os.environ["SKILL"]
+show = lambda path: subprocess.run(["git", "show", f"HEAD:{path}"], check=True, capture_output=True, text=True).stdout
+def fill(m):
+    name = m.group(1)
+    if name == "version": return os.environ["VERSION"]
+    if name == "commit": return os.environ["COMMIT"]
+    code = show(f"{skill}/references/{name}")
+    return "\n".join(l for l in code.rstrip("\n").split("\n") if "SPDX-License-Identifier" not in l)
+print(re.sub(r"\{\{([\w.-]+)\}\}", fill, show(f"{skill}/SKILL.lite.md")), end="")
+PY
+  ssh-keygen -Y sign -f "$key" -n file "$lite"
+  echo "built $lite and $lite.sig"
+fi

@@ -13,7 +13,9 @@ Nothing here may contain client names, private notes, secrets, or code copied fr
 ## Sharing a skill
 
 `./pack.sh <skill>` builds `dist/<skill>-<version>.zip` from the last commit (its `VERSION` file
-gets the commit id and date) and signs it: send the `.zip` and the `.zip.sig`. Each skill carries
+gets the commit id and date) and signs it: send the `.zip` and the `.zip.sig`. When a skill has a
+`SKILL.lite.md`, it also builds `dist/<skill>-<version>-essential.SKILL.md`: one self-contained file
+(core code inlined) to share on its own; friends ask me for the full zip if they get stuck. Each skill carries
 its own `LICENSE`. To check a zip came from me unchanged, a friend needs `allowed_signers` (my
 public key, sent separately) and runs:
 
