@@ -1,0 +1,17 @@
+{
+  "name": "ecclesiaste-panda",
+  "description": "Ecclesiaste Panda's Claude Code skills, made generic from real client work.",
+  "owner": {
+    "name": "Ecclesiaste Panda",
+    "url": "https://github.com/ecclesiaste-panda"
+  },
+  "plugins": [
+    {
+      "name": "scroll-driven-homepage",
+      "source": "./",
+      "description": "Add a scroll-driven homepage to the product app you already have: real screens, no generated media, production checks included.",
+      "version": "1.0.0",
+      "category": "design"
+    }
+  ]
+}

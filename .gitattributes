@@ -1,2 +1,2 @@
-*/VERSION export-subst
-*/SKILL.lite.md export-ignore
+skills/*/VERSION export-subst
+skills/*/SKILL.lite.md export-ignore

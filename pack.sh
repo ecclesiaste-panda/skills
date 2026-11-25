@@ -7,29 +7,33 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-skill="${1:?usage: ./pack.sh <skill-folder>}"
-[ -f "$skill/SKILL.md" ] || { echo "no $skill/SKILL.md" >&2; exit 1; }
-if [ -n "$(git status --porcelain -- "$skill")" ]; then
+skill="${1:?usage: ./pack.sh <skill-name>}"
+dir="skills/$skill"
+[ -f "$dir/SKILL.md" ] || { echo "no $dir/SKILL.md" >&2; exit 1; }
+if [ -n "$(git status --porcelain -- "$dir")" ]; then
   echo "$skill has uncommitted changes: commit first, the zip is built from HEAD" >&2
   exit 1
 fi
 
-version="$(sed -n 's/^  version: *//p' "$skill/SKILL.md" | head -1)"
+version="$(sed -n 's/^  version: *//p' "$dir/SKILL.md" | head -1)"
 out="dist/$skill-${version:-0}.zip"
 mkdir -p dist
 rm -f "$out" "$out.sig"
 
 key="${SIGNING_KEY:-$HOME/.ssh/id_ed25519}"
-git archive --format=zip -o "$out" HEAD "$skill"
+# Zip with the skill folder at its root (no skills/ prefix); VERSION gets the commit stamp.
+tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+git archive --format=tar HEAD "$dir" | tar -x -C "$tmp"
+(cd "$tmp/skills" && zip -qr - "$skill") > "$out"
 ssh-keygen -Y sign -f "$key" -n file "$out"
 echo "built $out and $out.sig ($(git rev-parse --short HEAD))"
 
 # Essential edition: one SKILL.md, built from SKILL.lite.md with {{file}} replaced by
 # that file from references/ (as committed), plus {{version}} and {{commit}}.
-if git cat-file -e "HEAD:$skill/SKILL.lite.md" 2>/dev/null; then
+if git cat-file -e "HEAD:$dir/SKILL.lite.md" 2>/dev/null; then
   lite="dist/$skill-${version:-0}-essential.SKILL.md"
   rm -f "$lite" "$lite.sig"
-  SKILL="$skill" VERSION="${version:-0}" COMMIT="$(git rev-parse --short HEAD)" python3 - > "$lite" <<'PY'
+  SKILL="$dir" VERSION="${version:-0}" COMMIT="$(git rev-parse --short HEAD)" python3 - > "$lite" <<'PY'
 import os, re, subprocess
 skill = os.environ["SKILL"]
 show = lambda path: subprocess.run(["git", "show", f"HEAD:{path}"], check=True, capture_output=True, text=True).stdout

@@ -1,0 +1,10 @@
+{
+  "name": "scroll-driven-homepage",
+  "version": "1.0.0",
+  "description": "Add a scroll-driven homepage to the product app you already have: real screens, no generated media, production checks included.",
+  "author": { "name": "Ecclesiaste Panda", "url": "https://github.com/ecclesiaste-panda" },
+  "homepage": "https://ecclesiaste-panda.github.io/skills/",
+  "repository": "https://github.com/ecclesiaste-panda/skills",
+  "license": "MIT",
+  "keywords": ["scroll", "scrollytelling", "landing-page", "homepage", "animation", "no-dependencies"]
+}
